@@ -33,6 +33,24 @@ VALID_CATEGORIES = {"bug", "feature_request", "question", "documentation", "othe
 _tables_ready = False
 
 
+def _run_ddl_ignore_already_exists(sql: str):
+    """
+    Run a CREATE/ALTER statement, tolerating the harmless race where two
+    requests both pass the "does it exist?" check at the same moment and
+    one loses the race to actually create it. Even "IF NOT EXISTS" isn't
+    perfectly race-proof in Postgres under concurrent requests, so this
+    catches that specific case and treats it as success. Any other error
+    is re-raised.
+    """
+    try:
+        lakebase.run_write(sql)
+    except Exception as e:
+        if "already exists" in str(e).lower():
+            logger.info("Schema object already exists, continuing: %s", e)
+        else:
+            raise
+
+
 def ensure_tables():
     """
     Create the tickets/ticket_messages tables in Lakebase if they don't exist
@@ -46,7 +64,7 @@ def ensure_tables():
     if _tables_ready:
         return
 
-    lakebase.run_write(
+    _run_ddl_ignore_already_exists(
         f"""
         CREATE TABLE IF NOT EXISTS {TICKETS_TABLE} (
             ticket_id   SERIAL PRIMARY KEY,
@@ -57,7 +75,7 @@ def ensure_tables():
         )
         """
     )
-    lakebase.run_write(
+    _run_ddl_ignore_already_exists(
         f"""
         CREATE TABLE IF NOT EXISTS {MESSAGES_TABLE} (
             message_id   SERIAL PRIMARY KEY,
@@ -78,7 +96,7 @@ def ensure_tables():
         "assigned_to TEXT",
         "updated_at TIMESTAMPTZ NOT NULL DEFAULT now()",
     ):
-        lakebase.run_write(
+        _run_ddl_ignore_already_exists(
             f"ALTER TABLE {TICKETS_TABLE} ADD COLUMN IF NOT EXISTS {column_def}"
         )
 
