@@ -73,13 +73,21 @@ def get_connection():
     """Yield a pooled psycopg2 connection with a RealDictCursor factory."""
     conn_pool = _get_pool()
     conn = conn_pool.getconn()
+    # Autocommit means every statement closes its own transaction
+    # immediately. Without this, a plain SELECT (run_query) leaves an open,
+    # uncommitted transaction on the connection when it's returned to the
+    # pool - the next request to reuse that same pooled connection then
+    # inherits a stale/half-open transaction, which can silently break
+    # (or outright fail) the write that follows. Autocommit avoids that
+    # class of bug entirely for this app, since we don't need multi
+    # statement transactions.
+    conn.autocommit = True
     try:
         yield conn
     except Exception:
-        # Something went wrong mid-transaction - roll back so this
-        # connection goes back to the pool in a clean state, not stuck
-        # inside a broken transaction that would poison the next request
-        # to reuse it.
+        # Still roll back defensively in case autocommit was overridden
+        # somewhere, so a failed request never leaves the connection in a
+        # broken transaction state for the next request to inherit.
         conn.rollback()
         raise
     finally:
