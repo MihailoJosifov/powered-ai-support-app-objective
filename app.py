@@ -35,18 +35,32 @@ _tables_ready = False
 
 def _run_ddl_ignore_already_exists(sql: str):
     """
-    Run a CREATE/ALTER statement, tolerating the harmless race where two
-    requests both pass the "does it exist?" check at the same moment and
-    one loses the race to actually create it. Even "IF NOT EXISTS" isn't
-    perfectly race-proof in Postgres under concurrent requests, so this
-    catches that specific case and treats it as success. Any other error
-    is re-raised.
+    Run a CREATE/ALTER statement, tolerating two harmless situations:
+
+    1. A race where two requests both pass the "does it exist?" check at
+       the same moment and one loses the race to actually create it - even
+       "IF NOT EXISTS" isn't perfectly race-proof in Postgres under
+       concurrent requests.
+    2. The table already has the column/schema we want, but the app's
+       database role isn't the *owner* of the table (e.g. it was created
+       manually by a different Postgres role via the SQL Editor), so
+       Postgres refuses to even evaluate "IF NOT EXISTS" and blocks the
+       ALTER with "must be owner of table ...". If the schema is already
+       correct, this is safe to skip.
+
+    Any other, unexpected error is re-raised.
     """
     try:
         lakebase.run_write(sql)
     except Exception as e:
-        if "already exists" in str(e).lower():
+        message = str(e).lower()
+        if "already exists" in message:
             logger.info("Schema object already exists, continuing: %s", e)
+        elif "must be owner of" in message:
+            logger.warning(
+                "Skipping DDL - app's DB role does not own this table "
+                "(schema was likely already set up manually): %s", e
+            )
         else:
             raise
 
