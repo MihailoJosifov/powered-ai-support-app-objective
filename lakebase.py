@@ -5,37 +5,85 @@ Connects using a single LAKEBASE_URL (a standard Postgres connection URL,
 e.g. postgresql://role:password@host:5432/databricks_postgres?sslmode=require)
 pointing at a native Postgres role with a static, non-expiring password.
 This keeps setup to a single secret instead of five separate env vars.
+
+The secret is fetched once and cached, and connections are pulled from a
+small pool instead of opening a brand new connection (and re-fetching the
+secret) on every single query - which was slow enough under real usage to
+cause request timeouts.
 """
 
 import base64
+import logging
 import os
+import threading
 from contextlib import contextmanager
 
 import psycopg2
 from databricks.sdk import WorkspaceClient
+from psycopg2 import pool as pg_pool
 from psycopg2.extras import RealDictCursor
 from sqlalchemy import create_engine
+
+logger = logging.getLogger("lakebase")
 
 _w = WorkspaceClient()
 
 _SCOPE = os.environ.get("LAKEBASE_SECRET_SCOPE", "database")
 _KEY = os.environ.get("LAKEBASE_SECRET_KEY", "lakebase-url")
 
+_url_lock = threading.Lock()
+_cached_url: str | None = None
+
+_pool_lock = threading.Lock()
+_connection_pool: pg_pool.ThreadedConnectionPool | None = None
+
 
 def _lakebase_url() -> str:
-    """Fetch and decode the Lakebase connection URL from the Databricks secret scope."""
-    secret = _w.secrets.get_secret(scope=_SCOPE, key=_KEY)
-    return base64.b64decode(secret.value).decode("utf-8")
+    """
+    Fetch and decode the Lakebase connection URL from the Databricks secret
+    scope, once per process. Subsequent calls reuse the cached value instead
+    of hitting the secrets API again.
+    """
+    global _cached_url
+    if _cached_url is None:
+        with _url_lock:
+            if _cached_url is None:
+                secret = _w.secrets.get_secret(scope=_SCOPE, key=_KEY)
+                _cached_url = base64.b64decode(secret.value).decode("utf-8")
+    return _cached_url
+
+
+def _get_pool() -> pg_pool.ThreadedConnectionPool:
+    """Return the process-wide connection pool, creating it on first use."""
+    global _connection_pool
+    if _connection_pool is None:
+        with _pool_lock:
+            if _connection_pool is None:
+                _connection_pool = pg_pool.ThreadedConnectionPool(
+                    minconn=1,
+                    maxconn=10,
+                    dsn=_lakebase_url(),
+                    cursor_factory=RealDictCursor,
+                )
+    return _connection_pool
 
 
 @contextmanager
 def get_connection():
-    """Yield a raw psycopg2 connection with a RealDictCursor factory."""
-    conn = psycopg2.connect(_lakebase_url(), cursor_factory=RealDictCursor)
+    """Yield a pooled psycopg2 connection with a RealDictCursor factory."""
+    conn_pool = _get_pool()
+    conn = conn_pool.getconn()
     try:
         yield conn
+    except Exception:
+        # Something went wrong mid-transaction - roll back so this
+        # connection goes back to the pool in a clean state, not stuck
+        # inside a broken transaction that would poison the next request
+        # to reuse it.
+        conn.rollback()
+        raise
     finally:
-        conn.close()
+        conn_pool.putconn(conn)
 
 
 def get_engine():
