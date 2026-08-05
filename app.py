@@ -220,6 +220,29 @@ def get_ticket(ticket_id):
     return jsonify({"ticket": ticket_rows[0], "messages": message_rows})
 
 
+@app.route("/tickets/<int:ticket_id>", methods=["DELETE"])
+def delete_ticket(ticket_id):
+    """Delete a ticket and all of its messages."""
+    ensure_tables()
+
+    ticket_exists = lakebase.run_query(
+        f"SELECT ticket_id FROM {TICKETS_TABLE} WHERE ticket_id = %s", (ticket_id,)
+    )
+    if not ticket_exists:
+        return jsonify({"error": f"Ticket {ticket_id} not found"}), 404
+
+    # Delete messages first - the foreign key on ticket_messages.ticket_id
+    # would otherwise block deleting the ticket itself.
+    lakebase.run_write(
+        f"DELETE FROM {MESSAGES_TABLE} WHERE ticket_id = %s", (ticket_id,)
+    )
+    lakebase.run_write(
+        f"DELETE FROM {TICKETS_TABLE} WHERE ticket_id = %s", (ticket_id,)
+    )
+
+    return jsonify({"success": True, "deleted_ticket_id": ticket_id})
+
+
 @app.route("/tickets/<int:ticket_id>/status", methods=["POST"])
 def update_status(ticket_id):
     """Update a ticket's status."""
