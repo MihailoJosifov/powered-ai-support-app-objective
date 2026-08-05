@@ -1,138 +1,663 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Support Tickets</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Support Ticket System</title>
   <style>
-    body { font-family: sans-serif; max-width: 900px; margin: 40px auto; color: #222; }
-    h1 { margin-bottom: 4px; }
-    .subtitle { color: #666; margin-top: 0; }
-    table { border-collapse: collapse; width: 100%; margin-top: 16px; }
-    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e0e0e0; }
-    th { color: #555; font-size: 13px; text-transform: uppercase; }
-    tr:hover { background: #fafafa; cursor: pointer; }
-    input, select, textarea, button { font-size: 14px; padding: 8px; margin-top: 4px; }
-    textarea { width: 100%; box-sizing: border-box; }
-    form.inline { display: flex; gap: 8px; align-items: center; margin: 16px 0; flex-wrap: wrap; }
-    .status { padding: 2px 8px; border-radius: 10px; font-size: 12px; }
-    .status-open { background: #fde2e2; color: #a11; }
-    .status-in_progress { background: #fff3cd; color: #8a6d00; }
-    .status-resolved { background: #d4edda; color: #1a6d2e; }
-    #detail { margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
-    .msg { padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
-    .msg-author { font-weight: bold; }
-    .msg-time { color: #999; font-size: 12px; }
-    .error { color: #a11; margin: 8px 0; }
-    .hidden { display: none; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #2d3748;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      margin-bottom: 30px;
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #718096;
+      font-size: 14px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .tab {
+      padding: 12px 24px;
+      background: transparent;
+      border: none;
+      color: #718096;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s ease;
+    }
+
+    .tab:hover {
+      color: #667eea;
+    }
+
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .search-bar {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 250px;
+      padding: 12px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    select {
+      padding: 12px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      color: white;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #4a5568;
+    }
+
+    .btn-secondary:hover {
+      background: #cbd5e0;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-label {
+      color: #718096;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: #2d3748;
+    }
+
+    .stat-icon {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    .tickets-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .ticket-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-left: 4px solid #e2e8f0;
+    }
+
+    .ticket-card:hover {
+      transform: translateX(4px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .ticket-card.priority-urgent {
+      border-left-color: #f56565;
+    }
+
+    .ticket-card.priority-high {
+      border-left-color: #ed8936;
+    }
+
+    .ticket-card.priority-medium {
+      border-left-color: #ecc94b;
+    }
+
+    .ticket-card.priority-low {
+      border-left-color: #48bb78;
+    }
+
+    .ticket-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 12px;
+    }
+
+    .ticket-id {
+      font-size: 12px;
+      color: #a0aec0;
+      font-weight: 600;
+    }
+
+    .ticket-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #2d3748;
+      margin: 8px 0;
+    }
+
+    .ticket-meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      font-size: 13px;
+      color: #718096;
+    }
+
+    .badge {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-open { background: #feb2b2; color: #742a2a; }
+    .status-in_progress { background: #fbd38d; color: #7c2d12; }
+    .status-resolved { background: #9ae6b4; color: #22543d; }
+    .status-closed { background: #cbd5e0; color: #2d3748; }
+
+    .priority-urgent { background: #fed7d7; color: #742a2a; }
+    .priority-high { background: #feebc8; color: #7c2d12; }
+    .priority-medium { background: #fef3c7; color: #78350f; }
+    .priority-low { background: #c6f6d5; color: #22543d; }
+
+    .category-badge {
+      background: #e6fffa;
+      color: #234e52;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 1000;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      max-width: 800px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: modalSlideIn 0.3s ease;
+    }
+
+    @keyframes modalSlideIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-header {
+      padding: 24px;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h2 {
+      font-size: 24px;
+      color: #2d3748;
+    }
+
+    .close-btn {
+      background: transparent;
+      border: none;
+      font-size: 28px;
+      color: #a0aec0;
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .close-btn:hover {
+      background: #f7fafc;
+      color: #2d3748;
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #2d3748;
+      font-size: 14px;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: all 0.3s ease;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .messages-container {
+      margin: 24px 0;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .message {
+      background: #f7fafc;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      border-left: 3px solid #667eea;
+    }
+
+    .message-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .message-author {
+      font-weight: 600;
+      color: #2d3748;
+    }
+
+    .message-time {
+      color: #a0aec0;
+      font-size: 12px;
+    }
+
+    .message-text {
+      color: #4a5568;
+      line-height: 1.6;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #a0aec0;
+    }
+
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .error {
+      background: #fed7d7;
+      color: #742a2a;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid #f56565;
+    }
+
+    .success {
+      background: #c6f6d5;
+      color: #22543d;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid #48bb78;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .search-bar {
+        flex-direction: column;
+      }
+      
+      .search-input {
+        width: 100%;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>Support Tickets</h1>
-  <p class="subtitle">Create tickets, add messages, and update status &mdash; all backed by Lakebase.</p>
+  <div class="container">
+    <div class="header">
+      <h1>🎫 Support Ticket System</h1>
+      <p class="subtitle">Manage support tickets with real-time tracking • Powered by Databricks & Lakebase</p>
+      
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+        <button class="tab" onclick="switchTab('tickets')">🎫 Tickets</button>
+        <button class="tab" onclick="switchTab('create')">➕ New Ticket</button>
+      </div>
+    </div>
 
-  <form class="inline" id="new-ticket-form">
-    <input name="title" id="new-title" placeholder="Ticket title" required style="flex:1">
-    <button type="submit">Create Ticket</button>
-  </form>
+    <div id="message-container"></div>
 
-  <form class="inline">
-    Filter by status:
-    <select id="status-filter">
-      <option value="">All</option>
-      <option value="open">open</option>
-      <option value="in_progress">in_progress</option>
-      <option value="resolved">resolved</option>
-    </select>
-  </form>
+    <!-- Dashboard Tab -->
+    <div id="dashboard-tab" class="tab-content active">
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📬</div>
+          <div class="stat-label">Open Tickets</div>
+          <div class="stat-value" id="stat-open">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⏳</div>
+          <div class="stat-label">In Progress</div>
+          <div class="stat-value" id="stat-progress">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-label">Resolved</div>
+          <div class="stat-value" id="stat-resolved">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔥</div>
+          <div class="stat-label">Urgent</div>
+          <div class="stat-value" id="stat-urgent">-</div>
+        </div>
+      </div>
 
-  <div id="error" class="error hidden"></div>
+      <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+        <h3 style="margin-bottom: 16px; color: #2d3748;">Recent Tickets</h3>
+        <div class="tickets-grid" id="dashboard-tickets"></div>
+      </div>
+    </div>
 
-  <table>
-    <thead>
-      <tr><th>ID</th><th>Title</th><th>Status</th><th>Created By</th><th>Created At</th></tr>
-    </thead>
-    <tbody id="ticket-rows"></tbody>
-  </table>
+    <!-- Tickets Tab -->
+    <div id="tickets-tab" class="tab-content">
+      <div class="search-bar">
+        <input type="text" class="search-input" id="search-input" placeholder="🔍 Search tickets by title...">
+        <select id="status-filter">
+          <option value="">All Statuses</option>
+          <option value="open">Open</option>
+          <option value="in_progress">In Progress</option>
+          <option value="resolved">Resolved</option>
+          <option value="closed">Closed</option>
+        </select>
+        <select id="priority-filter">
+          <option value="">All Priorities</option>
+          <option value="urgent">Urgent</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+        <button class="btn" onclick="loadTickets()">Apply Filters</button>
+      </div>
 
-  <div id="detail" class="hidden">
-    <h2 id="detail-title"></h2>
+      <div class="tickets-grid" id="tickets-list"></div>
+    </div>
 
-    <form class="inline" id="status-form">
-      Status:
-      <select id="status-select">
-        <option value="open">open</option>
-        <option value="in_progress">in_progress</option>
-        <option value="resolved">resolved</option>
-      </select>
-      <button type="submit">Update Status</button>
-    </form>
+    <!-- Create Ticket Tab -->
+    <div id="create-tab" class="tab-content">
+      <div style="background: white; padding: 32px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); max-width: 700px; margin: 0 auto;">
+        <h2 style="margin-bottom: 24px; color: #2d3748;">Create New Ticket</h2>
+        <form id="new-ticket-form">
+          <div class="form-group">
+            <label class="form-label">Ticket Title *</label>
+            <input type="text" id="new-title" placeholder="Brief description of the issue" required>
+          </div>
 
-    <h3>Messages</h3>
-    <div id="messages"></div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Priority *</label>
+              <select id="new-priority" required>
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
 
-    <form id="message-form">
-      <textarea id="message-text" rows="3" placeholder="Add a message..." required></textarea>
-      <button type="submit">Add Message</button>
-    </form>
+            <div class="form-group">
+              <label class="form-label">Category *</label>
+              <select id="new-category" required>
+                <option value="bug">Bug</option>
+                <option value="feature_request">Feature Request</option>
+                <option value="question">Question</option>
+                <option value="documentation">Documentation</option>
+                <option value="other" selected>Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Initial Message (Optional)</label>
+            <textarea id="new-description" placeholder="Provide additional details about the issue..."></textarea>
+          </div>
+
+          <button type="submit" class="btn" style="width: 100%;">Create Ticket</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ticket Detail Modal -->
+  <div id="ticket-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-title">Ticket Details</h2>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;" id="modal-badges"></div>
+
+        <div class="form-row" style="margin-bottom: 24px;">
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select id="modal-status">
+              <option value="open">Open</option>
+              <option value="in_progress">In Progress</option>
+              <option value="resolved">Resolved</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+          <div style="display: flex; align-items: flex-end;">
+            <button class="btn" onclick="updateTicketStatus()">Update Status</button>
+          </div>
+        </div>
+
+        <h3 style="margin-bottom: 16px; color: #2d3748;">Messages</h3>
+        <div class="messages-container" id="modal-messages"></div>
+
+        <form id="modal-message-form" style="margin-top: 24px;">
+          <div class="form-group">
+            <label class="form-label">Add Message</label>
+            <textarea id="modal-message-text" placeholder="Type your message here..." required></textarea>
+          </div>
+          <button type="submit" class="btn">Send Message</button>
+        </form>
+      </div>
+    </div>
   </div>
 
   <script>
     let currentTicketId = null;
+    let currentTab = 'dashboard';
 
-    function showError(msg) {
-      const el = document.getElementById('error');
-      el.textContent = msg;
-      el.classList.remove('hidden');
-      setTimeout(() => el.classList.add('hidden'), 5000);
-    }
-
-    async function loadTickets() {
-      const status = document.getElementById('status-filter').value;
-      const url = status ? `/tickets?status=${encodeURIComponent(status)}` : '/tickets';
-      const resp = await fetch(url);
-      const data = await resp.json();
-      if (!resp.ok) { showError(data.error || 'Failed to load tickets'); return; }
-
-      const tbody = document.getElementById('ticket-rows');
-      tbody.innerHTML = '';
-      data.forEach(t => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${t.ticket_id}</td>
-          <td>${escapeHtml(t.title)}</td>
-          <td><span class="status status-${t.status}">${t.status}</span></td>
-          <td>${escapeHtml(t.created_by)}</td>
-          <td>${new Date(t.created_at).toLocaleString()}</td>
-        `;
-        tr.addEventListener('click', () => openTicket(t.ticket_id));
-        tbody.appendChild(tr);
-      });
-    }
-
-    async function openTicket(ticketId) {
-      const resp = await fetch(`/tickets/${ticketId}`);
-      const data = await resp.json();
-      if (!resp.ok) { showError(data.error || 'Failed to load ticket'); return; }
-
-      currentTicketId = ticketId;
-      document.getElementById('detail').classList.remove('hidden');
-      document.getElementById('detail-title').textContent = `#${data.ticket.ticket_id} — ${data.ticket.title}`;
-      document.getElementById('status-select').value = data.ticket.status;
-
-      const msgDiv = document.getElementById('messages');
-      msgDiv.innerHTML = '';
-      data.messages.forEach(m => {
-        const div = document.createElement('div');
-        div.className = 'msg';
-        div.innerHTML = `
-          <div><span class="msg-author">${escapeHtml(m.author)}</span>
-          <span class="msg-time">${new Date(m.created_at).toLocaleString()}</span></div>
-          <div>${escapeHtml(m.message_text)}</div>
-        `;
-        msgDiv.appendChild(div);
-      });
-
-      document.getElementById('detail').scrollIntoView({ behavior: 'smooth' });
+    function showMessage(msg, type = 'success') {
+      const container = document.getElementById('message-container');
+      const div = document.createElement('div');
+      div.className = type;
+      div.textContent = msg;
+      container.appendChild(div);
+      setTimeout(() => div.remove(), 5000);
     }
 
     function escapeHtml(str) {
@@ -141,51 +666,270 @@
       return div.innerHTML;
     }
 
+    function switchTab(tabName) {
+      currentTab = tabName;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      
+      document.querySelector(`button[onclick="switchTab('${tabName}')"]`).classList.add('active');
+      document.getElementById(`${tabName}-tab`).classList.add('active');
+
+      if (tabName === 'dashboard') {
+        loadStats();
+        loadRecentTickets();
+      } else if (tabName === 'tickets') {
+        loadTickets();
+      }
+    }
+
+    async function loadStats() {
+      try {
+        const resp = await fetch('/stats');
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || 'Failed to load stats');
+
+        const statusMap = {};
+        (data.by_status || []).forEach(s => statusMap[s.status] = s.count);
+
+        const priorityMap = {};
+        (data.by_priority || []).forEach(p => priorityMap[p.priority] = p.count);
+
+        document.getElementById('stat-open').textContent = statusMap.open ?? 0;
+        document.getElementById('stat-progress').textContent = statusMap.in_progress ?? 0;
+        document.getElementById('stat-resolved').textContent = statusMap.resolved ?? 0;
+        document.getElementById('stat-urgent').textContent = priorityMap.urgent ?? 0;
+      } catch (err) {
+        console.error('Failed to load stats:', err);
+        // Show 0 instead of leaving "-" forever, so it's clear the page
+        // did load - check the browser console for the actual error.
+        ['stat-open', 'stat-progress', 'stat-resolved', 'stat-urgent'].forEach(id => {
+          document.getElementById(id).textContent = 0;
+        });
+      }
+    }
+
+    async function loadRecentTickets() {
+      try {
+        const resp = await fetch('/tickets');
+        const data = await resp.json();
+        const recent = data.slice(0, 5);
+        renderTickets(recent, 'dashboard-tickets');
+      } catch (err) {
+        console.error('Failed to load recent tickets:', err);
+      }
+    }
+
+    async function loadTickets() {
+      const status = document.getElementById('status-filter').value;
+      const priority = document.getElementById('priority-filter').value;
+      
+      let url = '/tickets';
+      const params = new URLSearchParams();
+      if (status) params.append('status', status);
+      if (params.toString()) url += '?' + params.toString();
+      
+      try {
+        const resp = await fetch(url);
+        let data = await resp.json();
+        
+        if (priority) {
+          data = data.filter(t => t.priority === priority);
+        }
+        
+        renderTickets(data, 'tickets-list');
+      } catch (err) {
+        showMessage('Failed to load tickets', 'error');
+      }
+    }
+
+    async function searchTickets() {
+      const query = document.getElementById('search-input').value;
+      if (!query.trim()) {
+        loadTickets();
+        return;
+      }
+      
+      try {
+        const resp = await fetch(`/search?q=${encodeURIComponent(query)}`);
+        const data = await resp.json();
+        renderTickets(data, 'tickets-list');
+      } catch (err) {
+        showMessage('Search failed', 'error');
+      }
+    }
+
+    function renderTickets(tickets, containerId) {
+      const container = document.getElementById(containerId);
+      
+      if (tickets.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📄</div>
+            <p>No tickets found</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = tickets.map(t => `
+        <div class="ticket-card priority-${t.priority}" onclick="openTicket(${t.ticket_id})">
+          <div class="ticket-header">
+            <div>
+              <div class="ticket-id">#${t.ticket_id}</div>
+              <div class="ticket-title">${escapeHtml(t.title)}</div>
+            </div>
+            <span class="badge status-${t.status}">${t.status.replace('_', ' ')}</span>
+          </div>
+          <div class="ticket-meta">
+            <span class="badge priority-${t.priority}">${t.priority}</span>
+            <span class="badge category-badge">${(t.category || 'other').replace('_', ' ')}</span>
+            <span>👤 ${escapeHtml(t.created_by)}</span>
+            <span>📅 ${new Date(t.created_at).toLocaleDateString()}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function openTicket(ticketId) {
+      try {
+        const resp = await fetch(`/tickets/${ticketId}`);
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error);
+        
+        currentTicketId = ticketId;
+        const ticket = data.ticket;
+        
+        document.getElementById('modal-title').textContent = `#${ticket.ticket_id} — ${ticket.title}`;
+        document.getElementById('modal-status').value = ticket.status;
+        
+        document.getElementById('modal-badges').innerHTML = `
+          <span class="badge status-${ticket.status}">${ticket.status.replace('_', ' ')}</span>
+          <span class="badge priority-${ticket.priority}">${ticket.priority}</span>
+          <span class="badge category-badge">${(ticket.category || 'other').replace('_', ' ')}</span>
+          <span style="color: #718096;">👤 ${escapeHtml(ticket.created_by)}</span>
+          <span style="color: #718096;">📅 ${new Date(ticket.created_at).toLocaleString()}</span>
+        `;
+        
+        const messagesDiv = document.getElementById('modal-messages');
+        if (data.messages.length === 0) {
+          messagesDiv.innerHTML = '<div class="empty-state"><p>No messages yet</p></div>';
+        } else {
+          messagesDiv.innerHTML = data.messages.map(m => `
+            <div class="message">
+              <div class="message-header">
+                <span class="message-author">${escapeHtml(m.author)}</span>
+                <span class="message-time">${new Date(m.created_at).toLocaleString()}</span>
+              </div>
+              <div class="message-text">${escapeHtml(m.message_text)}</div>
+            </div>
+          `).join('');
+        }
+        
+        document.getElementById('ticket-modal').classList.add('active');
+      } catch (err) {
+        showMessage(err.message || 'Failed to load ticket', 'error');
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('ticket-modal').classList.remove('active');
+      currentTicketId = null;
+    }
+
+    async function updateTicketStatus() {
+      if (!currentTicketId) return;
+      
+      const status = document.getElementById('modal-status').value;
+      try {
+        const resp = await fetch(`/tickets/${currentTicketId}/status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status })
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error);
+        
+        showMessage('Status updated successfully');
+        if (currentTab === 'dashboard') {
+          loadStats();
+          loadRecentTickets();
+        } else {
+          loadTickets();
+        }
+        await openTicket(currentTicketId);
+      } catch (err) {
+        showMessage(err.message || 'Failed to update status', 'error');
+      }
+    }
+
     document.getElementById('new-ticket-form').addEventListener('submit', async (e) => {
       e.preventDefault();
+      
       const title = document.getElementById('new-title').value;
-      const resp = await fetch('/tickets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title })
-      });
-      const data = await resp.json();
-      if (!resp.ok) { showError(data.error || 'Failed to create ticket'); return; }
-      document.getElementById('new-title').value = '';
-      await loadTickets();
+      const priority = document.getElementById('new-priority').value;
+      const category = document.getElementById('new-category').value;
+      const description = document.getElementById('new-description').value;
+      
+      try {
+        const resp = await fetch('/tickets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, priority, category })
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error);
+        
+        // If there's a description, add it as the first message
+        if (description.trim()) {
+          await fetch(`/tickets/${data.ticket_id}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message_text: description })
+          });
+        }
+        
+        showMessage('Ticket created successfully!');
+        document.getElementById('new-ticket-form').reset();
+        switchTab('tickets');
+      } catch (err) {
+        showMessage(err.message || 'Failed to create ticket', 'error');
+      }
     });
 
-    document.getElementById('status-filter').addEventListener('change', loadTickets);
-
-    document.getElementById('status-form').addEventListener('submit', async (e) => {
+    document.getElementById('modal-message-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const status = document.getElementById('status-select').value;
-      const resp = await fetch(`/tickets/${currentTicketId}/status`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-      });
-      const data = await resp.json();
-      if (!resp.ok) { showError(data.error || 'Failed to update status'); return; }
-      await loadTickets();
-      await openTicket(currentTicketId);
+      if (!currentTicketId) return;
+      
+      const message_text = document.getElementById('modal-message-text').value;
+      try {
+        const resp = await fetch(`/tickets/${currentTicketId}/messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message_text })
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error);
+        
+        document.getElementById('modal-message-text').value = '';
+        await openTicket(currentTicketId);
+      } catch (err) {
+        showMessage(err.message || 'Failed to add message', 'error');
+      }
     });
 
-    document.getElementById('message-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const message_text = document.getElementById('message-text').value;
-      const resp = await fetch(`/tickets/${currentTicketId}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message_text })
-      });
-      const data = await resp.json();
-      if (!resp.ok) { showError(data.error || 'Failed to add message'); return; }
-      document.getElementById('message-text').value = '';
-      await openTicket(currentTicketId);
+    document.getElementById('search-input').addEventListener('input', () => {
+      const timer = setTimeout(() => searchTickets(), 500);
+      document.getElementById('search-input').addEventListener('input', () => clearTimeout(timer), { once: true });
     });
 
-    loadTickets();
+    // Close modal when clicking outside
+    document.getElementById('ticket-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'ticket-modal') closeModal();
+    });
+
+    // Initialize
+    loadStats();
+    loadRecentTickets();
   </script>
 </body>
 </html>
