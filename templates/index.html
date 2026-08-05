@@ -628,8 +628,9 @@
               <option value="closed">Closed</option>
             </select>
           </div>
-          <div style="display: flex; align-items: flex-end;">
+          <div style="display: flex; align-items: flex-end; gap: 8px;">
             <button class="btn" onclick="updateTicketStatus()">Update Status</button>
+            <button class="btn" style="background: #e53e3e;" onclick="confirmDeleteTicket()">Delete Ticket</button>
           </div>
         </div>
 
@@ -859,6 +860,40 @@
         await openTicket(currentTicketId);
       } catch (err) {
         showMessage(err.message || 'Failed to update status', 'error');
+      }
+    }
+
+    function confirmDeleteTicket() {
+      if (!currentTicketId) return;
+      const title = document.getElementById('modal-title').textContent;
+      // Confirmation step required before deleting - this is a
+      // destructive, irreversible action.
+      const confirmed = window.confirm(
+        `Delete ${title}? This will permanently remove the ticket and all of its messages. This cannot be undone.`
+      );
+      if (confirmed) {
+        deleteTicket();
+      }
+    }
+
+    async function deleteTicket() {
+      if (!currentTicketId) return;
+
+      try {
+        const resp = await fetch(`/tickets/${currentTicketId}`, { method: 'DELETE' });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error);
+
+        showMessage('Ticket deleted');
+        closeModal();
+        if (currentTab === 'dashboard') {
+          loadStats();
+          loadRecentTickets();
+        } else {
+          loadTickets();
+        }
+      } catch (err) {
+        showMessage(err.message || 'Failed to delete ticket', 'error');
       }
     }
 
